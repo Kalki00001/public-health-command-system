@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FREE Hospital Finder - No API Keys Needed!</title>
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #2196F3;
+            --success: #4CAF50;
+            --danger: #F44336;
+            --dark: #0a0e27;
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+        }
+
+        .header {
+            padding: 1.5rem 2rem;
+            background: var(--card-bg);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--success));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: var(--success);
+            font-weight: 600;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 2rem;
+        }
+
+        .map-section {
+            height: calc(100vh - 200px);
+            min-height: 600px;
+        }
+
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            z-index: 1;
+        }
+
+        .location-overlay {
+            position: absolute;
+            top: 1rem;
+            left: 1rem;
+            right: 1rem;
+            z-index: 1000;
+        }
+
+        .location-status {
+            padding: 1rem 1.5rem;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .status-indicator {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.2);
+            }
+        }
+
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            max-height: calc(100vh - 150px);
+            overflow-y: auto;
+        }
+
+        .card {
+            padding: 1.5rem;
+        }
+
+        .card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .hospital-card {
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .hospital-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            transform: translateX(5px);
+        }
+
+        .hospital-card.nearest {
+            background: linear-gradient(135deg, rgba(76, 175, 80, 0.2), rgba(76, 175, 80, 0.05));
+            border-color: var(--success);
+        }
+
+        .hospital-rank {
+            width: 36px;
+            height: 36px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+
+        .hospital-card.nearest .hospital-rank {
+            background: var(--success);
+            animation: pulse 2s infinite;
+        }
+
+        .hospital-info {
+            flex: 1;
+        }
+
+        .hospital-info h3 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .hospital-info p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .distance-badge {
+            padding: 0.5rem 1rem;
+            background: var(--primary);
+            border-radius: 8px;
+            font-weight: 700;
+            white-space: nowrap;
+        }
+
+        .hospital-card.nearest .distance-badge {
+            background: var(--success);
+        }
+
+        .btn-primary,
+        .btn-emergency {
+            width: 100%;
+            padding: 1rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), #1976D2);
+            color: white;
+        }
+
+        .btn-emergency {
+            background: linear-gradient(135deg, var(--danger), #D32F2F);
+            color: white;
+        }
+
+        .btn-primary:hover,
+        .btn-emergency:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(33, 150, 243, 0.4);
+        }
+
+        .route-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .route-stat {
+            text-align: center;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 12px;
+        }
+
+        .stat-icon {
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        .stat-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--success);
+            margin-top: 0.25rem;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-secondary);
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: var(--success);
+            color: white;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-left: 0.5rem;
+        }
+
+        .free-badge {
+            background: var(--success);
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        @media (max-width: 1024px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+
+            .map-section {
+                height: 400px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏥</div>
+                <div class="logo-text">
+                    <h1>FREE Hospital Finder</h1>
+                    <p>✅ No API Keys Required • 100% Free</p>
+                </div>
+            </div>
+            <button class="btn-emergency" onclick="triggerEmergency()">
+                🚨 Emergency
+            </button>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="map-section glass-effect" style="position: relative;">
+            <div id="map"></div>
+            <div class="location-overlay">
+                <div id="location-status" class="location-status">
+                    <div class="spinner" style="width: 20px; height: 20px; border-width: 2px;"></div>
+                    <div>
+                        <strong>Initializing GPS...</strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="card glass-effect free-badge">
+                <strong>✅ 100% FREE - No API Keys!</strong>
+                <p style="margin-top: 0.5rem; font-size: 0.875rem;">
+                    Using OpenStreetMap + Overpass API
+                </p>
+            </div>
+
+            <div id="route-info-section"></div>
+
+            <div class="card glass-effect">
+                <h2>🏥 Nearby Hospitals</h2>
+                <div id="hospitals-list">
+                    <div class="loading">
+                        <div class="spinner"></div>
+                        <p>Searching for hospitals...</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass-effect">
+                <h2>⚡ Quick Actions</h2>
+                <button class="btn-primary" onclick="refreshSearch()">
+                    🔄 Refresh Search
+                </button>
+                <button class="btn-primary" onclick="centerOnUser()">
+                    🎯 Center on Me
+                </button>
+            </div>
+
+            <div class="card glass-effect">
+                <h2>✨ Features</h2>
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <strong>✅ No API Keys</strong><br>
+                        <small style="color: var(--text-secondary);">Works immediately</small>
+                    </li>
+                    <li style="padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <strong>✅ OpenStreetMap</strong><br>
+                        <small style="color: var(--text-secondary);">Free, open-source maps</small>
+                    </li>
+                    <li style="padding: 0.75rem 0; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                        <strong>✅ Global Coverage</strong><br>
+                        <small style="color: var(--text-secondary);">Works anywhere</small>
+                    </li>
+                    <li style="padding: 0.75rem 0;">
+                        <strong>✅ Real-Time GPS</strong><br>
+                        <small style="color: var(--text-secondary);">Live tracking</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Main Script -->
+    <script src="free_realtime_hospitals.js"></script>
+</body>
+
+</html>

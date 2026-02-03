@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Public Health Command System (SMC)</title>
+    <meta name="description" content="Real-time city health monitoring, disease alerts, and citizen health services">
+    <link rel="stylesheet" href="/static/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+</head>
+
+<body>
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+        <div class="login-container">
+            <div class="login-card glass-effect">
+                <div class="logo-section">
+                    <div class="logo-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M12 2L2 7L12 12L22 7L12 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M2 17L12 22L22 17" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M2 12L12 17L22 12" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h1>Smart Public Health Command</h1>
+                    <p class="subtitle">City-wide Health Monitoring & Alert System</p>
+                </div>
+
+                <div class="role-selection">
+                    <h2>Select Your Role</h2>
+                    <div class="role-cards">
+                        <button class="role-card" onclick="login('admin')">
+                            <div class="role-icon admin-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M3 9L12 2L21 9V20C21 20.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V9Z"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <h3>Admin (SMC)</h3>
+                            <p>City dashboard & ward monitoring</p>
+                        </button>
+
+                        <button class="role-card" onclick="login('health-worker')">
+                            <div class="role-icon worker-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path
+                                        d="M20 21V19C20 17.9391 19.5786 16.9217 18.8284 16.1716C18.0783 15.4214 17.0609 15 16 15H8C6.93913 15 5.92172 15.4214 5.17157 16.1716C4.42143 16.9217 4 17.9391 4 19V21"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                    <path
+                                        d="M12 11C14.2091 11 16 9.20914 16 7C16 4.79086 14.2091 3 12 3C9.79086 3 8 4.79086 8 7C8 9.20914 9.79086 11 12 11Z"
+                                        stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                        stroke-linejoin="round" />
+                                </svg>
+                            </div>
+                            <h3>Health Worker</h3>
+                            <p>Report disease cases</p>
+                        </button>
+
+                        <button class="role-card" onclick="login('citizen')">
+                            <div class="role-icon citizen-icon">
+                                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                                    <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="2"
+                                        stroke-linecap="round" />
+                                </svg>
+                            </div>
+                            <h3>Citizen</h3>
+                            <p>View alerts & find health centers</p>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Admin Dashboard -->
+    <div id="admin-screen" class="screen">
+        <nav class="navbar glass-effect">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <div class="nav-logo">SMC</div>
+                    <span class="nav-title">Admin Dashboard</span>
+                </div>
+                <div style="display:flex; gap:12px;">
+                    <!-- 🚨 TEST ALERT BUTTON -->
+                    <button id="test-alert-btn" style="
+                    padding:8px 14px;
+                    background:#d32f2f;
+                    color:white;
+                    border:none;
+                    border-radius:6px;
+                    font-weight:600;
+                    cursor:pointer;">
+                        🚨 Test Alert
+                    </button>
+
+                    <button class="btn-logout" onclick="logout()">Logout</button>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+
+        <div class="dashboard-container">
+            <!-- Stats Cards -->
+            <div class="stats-grid">
+                <div class="stat-card glass-effect">
+                    <div class="stat-icon cases-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M9 11L12 14L22 4" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path
+                                d="M21 12V19C21 19.5304 20.7893 21.0391 20.4142 21.4142C20.0391 21.7893 19.5304 22 19 22H5C4.46957 22 3.96086 21.7893 3.58579 21.4142C3.21071 21.0391 3 20.5304 3 20V6C3 5.46957 3.21071 4.96086 3.58579 4.58579C3.96086 4.21071 4.46957 4 5 4H16"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-cases">0</h3>
+                        <p>Total Cases (7 days)</p>
+                    </div>
+                </div>
+
+                <div class="stat-card glass-effect">
+                    <div class="stat-icon alerts-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M10.29 3.86L1.82 18C1.64537 18.3024 1.55296 18.6453 1.55199 18.9945C1.55101 19.3437 1.64151 19.6871 1.81445 19.9905C1.98738 20.2939 2.23675 20.5467 2.53773 20.7239C2.83871 20.9011 3.18082 20.9962 3.53 21H20.47C20.8192 20.9962 21.1613 20.9011 21.4623 20.7239C21.7633 20.5467 22.0126 20.2939 22.1856 19.9905C22.3585 19.6871 22.449 19.3437 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5317 3.56611 13.2807 3.32312 12.9812 3.15448C12.6817 2.98585 12.3437 2.89725 12 2.89725C11.6563 2.89725 11.3183 2.98585 11.0188 3.15448C10.7193 3.32312 10.4683 3.56611 10.29 3.86Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <line x1="12" y1="9" x2="12" y2="13" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" />
+                            <circle cx="12" cy="17" r="0.5" fill="currentColor" stroke="currentColor" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="active-alerts">0</h3>
+                        <p>Active Alerts</p>
+                    </div>
+                </div>
+
+                <div class="stat-card glass-effect">
+                    <div class="stat-icon beds-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M3 9V19C3 19.5304 3.21071 20.0391 3.58579 20.4142C3.96086 20.7893 4.46957 21 5 21H19C19.5304 21 20.0391 20.7893 20.4142 20.4142C20.7893 20.0391 21 19.5304 21 19V9"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <path d="M3 9H21" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            <path d="M9 21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                            <path d="M15 21V9" stroke="currentColor" stroke-width="2" stroke-linecap="round" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="available-beds">0</h3>
+                        <p>Available Beds</p>
+                    </div>
+                </div>
+
+                <div class="stat-card glass-effect">
+                    <div class="stat-icon wards-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                            <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" />
+                        </svg>
+                    </div>
+                    <div class="stat-content">
+                        <h3 id="total-wards">10</h3>
+                        <p>Total Wards</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content Grid -->
+            <div class="main-grid">
+                <!-- City Map -->
+                <div class="map-section glass-effect">
+                    <h2>City Health Map</h2>
+                    <div id="city-map" class="map-container"></div>
+                    <div class="map-legend">
+                        <div class="legend-item">
+                            <span class="legend-color safe"></span>
+                            <span>Safe</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color warning"></span>
+                            <span>Warning</span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color critical"></span>
+                            <span>Critical</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Alerts Panel -->
+                <div class="alerts-section glass-effect">
+                    <h2>Active Alerts</h2>
+                    <div id="alerts-list" class="alerts-list"></div>
+                </div>
+            </div>
+
+            <!-- Ward Details Modal -->
+            <div id="ward-modal" class="modal">
+                <div class="modal-content glass-effect">
+                    <div class="modal-header">
+                        <h2 id="ward-modal-title">Ward Details</h2>
+                        <button class="modal-close" onclick="closeWardModal()">&times;</button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="ward-stats">
+                            <div class="ward-stat">
+                                <span class="label">Population:</span>
+                                <span id="ward-population" class="value">0</span>
+                            </div>
+                            <div class="ward-stat">
+                                <span class="label">Active Cases:</span>
+                                <span id="ward-cases" class="value">0</span>
+                            </div>
+                            <div class="ward-stat">
+                                <span class="label">Alerts:</span>
+                                <span id="ward-alerts" class="value">0</span>
+                            </div>
+                        </div>
+
+                        <div class="chart-section">
+                            <h3>Disease Trends (30 Days)</h3>
+                            <canvas id="ward-chart"></canvas>
+                        </div>
+
+                        <div class="hospitals-section">
+                            <h3>Hospitals in Ward</h3>
+                            <div id="ward-hospitals"></div>
+                        </div>
+
+                        <div class="actions-section">
+                            <h3>Suggested Actions</h3>
+                            <ul id="suggested-actions"></ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Health Worker Screen -->
+    <div id="health-worker-screen" class="screen">
+        <nav class="navbar glass-effect">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <div class="nav-logo">SMC</div>
+                    <span class="nav-title">Health Worker Portal</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </nav>
+
+        <div class="worker-container">
+            <div class="form-card glass-effect">
+                <h1>Report Disease Case</h1>
+                <p class="form-subtitle">Fill in the details to report a new case</p>
+
+                <form id="case-report-form" onsubmit="submitCase(event)">
+                    <div class="form-group">
+                        <label for="disease-type">Disease Type *</label>
+                        <select id="disease-type" required>
+                            <option value="">Select disease...</option>
+                            <option value="dengue">Dengue</option>
+                            <option value="malaria">Malaria</option>
+                            <option value="typhoid">Typhoid</option>
+                            <option value="covid">COVID-19</option>
+                            <option value="tuberculosis">Tuberculosis</option>
+                            <option value="cholera">Cholera</option>
+                        </select>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="patient-age">Patient Age *</label>
+                            <input type="number" id="patient-age" min="0" max="120" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="patient-gender">Gender *</label>
+                            <select id="patient-gender" required>
+                                <option value="">Select...</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="severity">Severity Level *</label>
+                        <select id="severity" required>
+                            <option value="">Select severity...</option>
+                            <option value="low">Low (Mild symptoms)</option>
+                            <option value="medium">Medium (Moderate symptoms)</option>
+                            <option value="high">High (Severe symptoms)</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="ward-select">Ward *</label>
+                        <select id="ward-select" required>
+                            <option value="">Select ward...</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="notes">Additional Notes</label>
+                        <textarea id="notes" rows="4" placeholder="Any additional information..."></textarea>
+                    </div>
+
+                    <button type="submit" class="btn-submit">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22 2L11 13" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                            <path d="M22 2L15 22L11 13L2 9L22 2Z" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                        Submit Report
+                    </button>
+                </form>
+            </div>
+
+            <!-- Success Modal -->
+            <div id="success-modal" class="modal">
+                <div class="modal-content glass-effect success-modal">
+                    <div class="success-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" />
+                            <path d="M8 12L11 15L16 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <h2>Case Reported Successfully!</h2>
+                    <p>Case ID: <strong id="case-id"></strong></p>
+                    <p class="success-message">The case has been recorded and will be reviewed by the SMC team.</p>
+                    <button class="btn-primary" onclick="closeSuccessModal()">Report Another Case</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Citizen Screen -->
+    <div id="citizen-screen" class="screen">
+        <nav class="navbar glass-effect">
+            <div class="nav-content">
+                <div class="nav-brand">
+                    <div class="nav-logo">SMC</div>
+                    <span class="nav-title">Citizen Health Portal</span>
+                </div>
+                <button class="btn-logout" onclick="logout()">Back to Home</button>
+            </div>
+        </nav>
+
+        <div class="citizen-container">
+            <!-- Emergency Contact -->
+            <div class="emergency-banner glass-effect">
+                <div class="emergency-content">
+                    <div class="emergency-icon">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M22 16.92V19.92C22.0011 20.1985 21.9441 20.4742 21.8325 20.7293C21.7209 20.9845 21.5573 21.2136 21.3521 21.4019C21.1468 21.5901 20.9046 21.7335 20.6407 21.8227C20.3769 21.9119 20.0974 21.9451 19.82 21.92C16.7428 21.5856 13.787 20.5341 11.19 18.85C8.77382 17.3147 6.72533 15.2662 5.18999 12.85C3.49997 10.2412 2.44824 7.27099 2.11999 4.18C2.095 3.90347 2.12787 3.62476 2.21649 3.36162C2.30512 3.09849 2.44756 2.85669 2.63476 2.65162C2.82196 2.44655 3.0498 2.28271 3.30379 2.17052C3.55777 2.05833 3.83233 2.00026 4.10999 2H7.10999C7.5953 1.99522 8.06579 2.16708 8.43376 2.48353C8.80173 2.79999 9.04207 3.23945 9.10999 3.72C9.23662 4.68007 9.47144 5.62273 9.80999 6.53C9.94454 6.88792 9.97366 7.27691 9.8939 7.65088C9.81415 8.02485 9.62886 8.36811 9.35999 8.64L8.08999 9.91C9.51355 12.4135 11.5864 14.4864 14.09 15.91L15.36 14.64C15.6319 14.3711 15.9751 14.1858 16.3491 14.1061C16.7231 14.0263 17.1121 14.0555 17.47 14.19C18.3773 14.5286 19.3199 14.7634 20.28 14.89C20.7658 14.9585 21.2094 15.2032 21.5265 15.5775C21.8437 15.9518 22.0122 16.4296 22 16.92Z"
+                                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        </svg>
+                    </div>
+                    <div>
+                        <h3>Emergency Health Helpline</h3>
+                        <p>Available 24/7 for health emergencies</p>
+                    </div>
+                </div>
+                <a href="tel:108" class="btn-emergency">Call 108</a>
+            </div>
+
+            <!-- Nearby Alerts -->
+            <div class="section glass-effect">
+                <h2>Health Alerts in Your Area</h2>
+                <div id="citizen-alerts" class="citizen-alerts"></div>
+            </div>
+
+            <!-- Nearby Hospitals Map -->
+            <div class="section glass-effect">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                    <h2 style="margin: 0;">Nearby Health Centers</h2>
+                    <div id="location-control-panel" class="location-control-panel">
+                        <button id="location-toggle-btn" class="btn-location-toggle" onclick="toggleLocationTracking()">
+                            <svg id="location-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                style="width: 20px; height: 20px; margin-right: 0.5rem;">
+                                <path
+                                    d="M21 10C21 17 12 23 12 23C12 23 3 17 3 10C3 7.61305 3.94821 5.32387 5.63604 3.63604C7.32387 1.94821 9.61305 1 12 1C14.3869 1 16.6761 1.94821 18.364 3.63604C20.0518 5.32387 21 7.61305 21 10Z"
+                                    stroke="currentColor" stroke-width="2" stroke-linecap="round"
+                                    stroke-linejoin="round" />
+                                <circle cx="12" cy="10" r="3" stroke="currentColor" stroke-width="2" />
+                            </svg>
+                            <span id="location-toggle-text">Enable Location</span>
+                        </button>
+                        <span id="location-status-badge" class="location-status-badge"></span>
+                    </div>
+                </div>
+                <div id="citizen-map" class="map-container"></div>
+                <div id="hospitals-list" class="hospitals-list"></div>
+            </div>
+
+            <!-- Prevention Tips -->
+            <div class="section glass-effect">
+                <h2>Health & Prevention Tips</h2>
+                <div class="tips-grid">
+                    <div class="tip-card">
+                        <div class="tip-icon">🦟</div>
+                        <h3>Dengue Prevention</h3>
+                        <p>Eliminate standing water, use mosquito repellent, and wear protective clothing.</p>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">💧</div>
+                        <h3>Clean Water</h3>
+                        <p>Always drink boiled or filtered water to prevent waterborne diseases.</p>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">😷</div>
+                        <h3>Hygiene</h3>
+                        <p>Wash hands frequently with soap and maintain personal hygiene.</p>
+                    </div>
+                    <div class="tip-card">
+                        <div class="tip-icon">💉</div>
+                        <h3>Vaccination</h3>
+                        <p>Stay up-to-date with recommended vaccinations for you and your family.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="/static/app.js"></script>
+    <script src="/static/citizen_routing.js"></script>
+
+    <!-- Zone Alert Banner -->
+    <div id="zoneAlert" class="global-alert"></div>
+
+</body>
+
+</html>

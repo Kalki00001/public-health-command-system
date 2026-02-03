@@ -1,0 +1,72 @@
+version: '3.8'
+
+services:
+  # Redis - Message Queue & Cache
+  redis:
+    image: redis:7-alpine
+    container_name: smc_redis
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: smc_backend
+    ports:
+      - "8000:8000"
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - LOG_LEVEL=info
+    depends_on:
+      redis:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+    command: uvicorn realtime_backend:app --host 0.0.0.0 --port 8000 --reload
+
+  # ML Inference Service (separate container for scaling)
+  ml_service:
+    build:
+      context: .
+      dockerfile: Dockerfile.ml
+    container_name: smc_ml_service
+    ports:
+      - "8001:8001"
+    environment:
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - redis
+    volumes:
+      - ./models:/app/models
+    command: python streaming_ml_service.py
+
+  # Nginx - Reverse Proxy & Load Balancer
+  nginx:
+    image: nginx:alpine
+    container_name: smc_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./frontend:/usr/share/nginx/html:ro
+    depends_on:
+      - backend
+
+volumes:
+  redis_data:
+    driver: local
+
+networks:
+  default:
+    name: smc_network
