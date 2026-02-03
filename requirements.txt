@@ -8,7 +8,7 @@ redis==5.0.1
 
 # Data (prebuilt wheels only)
 numpy==1.26.4
-pandas==2.1.4
+*pandas==2.1.4
 
 # Validation & forms
 pydantic==2.5.0
